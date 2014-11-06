@@ -510,18 +510,30 @@ Stomp =
 
 # # `Stomp` object exportation
 
-# export as CommonJS module
-if exports?
-  exports.Stomp = Stomp
+((root, factory) ->
+    if typeof module is 'object' and module.exports
+      # Node, or CommonJS-Like environments
+      module.exports = factory()
+    else
+      if typeof define is 'function' and define.amd
+        # AMD. Register as an anonymous module.
+        define ->
+          factory(root)
+      else
+        # export in the Web Browser
+        if window?
+          # in the Web browser
+           root.Stomp = factory(root)
+        else if !exports
+          # or in the current object (e.g. a WebWorker)
+          self.Stomp = Stomp
+)(@, (global) ->
 
-# export in the Web Browser
-if window?
-  # in the Web browser, rely on `window.setInterval` to handle heart-beats
-  Stomp.setInterval= (interval, f) ->
-    window.setInterval f, interval
-  Stomp.clearInterval= (id) ->
-    window.clearInterval id
-  window.Stomp = Stomp
-# or in the current object (e.g. a WebWorker)
-else if !exports
-  self.Stomp = Stomp
+  if window?
+    # in the Web browser, rely on `window.setInterval` to handle heart-beats
+    Stomp.setInterval = (interval, f) ->
+      window.setInterval f, interval
+    Stomp.clearInterval = (id) ->
+      window.clearInterval id
+  Stomp
+)
